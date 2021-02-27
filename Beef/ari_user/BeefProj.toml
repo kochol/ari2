@@ -1,5 +1,5 @@
 FileVersion = 1
-Dependencies = {corlib = "*", JSON_Beef = "*", ari_net = "*"}
+Dependencies = {corlib = "*", ari_net = "*", "Atma.Json" = "*"}
 
 [Project]
 Name = "ari_user"

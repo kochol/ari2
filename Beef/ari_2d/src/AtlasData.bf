@@ -1,9 +1,10 @@
 using System;
 using System.Collections;
+using Atma;
 
 namespace ari.en
 {
-	[Reflect]
+	[Serializable]
 	class AtlasData
 	{
 		public String image = null ~ delete _;

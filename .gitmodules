@@ -10,3 +10,6 @@
 [submodule "Beef/deps/imgui-beef"]
 	path = Beef/deps/imgui-beef
 	url = https://github.com/kochol/imgui-beef.git
+[submodule "Beef/deps/Atma.Json"]
+	path = Beef/deps/Atma.Json
+	url = https://github.com/kochol/Atma.Json.git

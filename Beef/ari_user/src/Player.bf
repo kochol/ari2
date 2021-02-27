@@ -1,8 +1,9 @@
 using System;
+using Atma;
 
 namespace ari.user
 {
-	[Reflect]
+	[Serializable]
 	public class Player
 	{
 		public int64 id;

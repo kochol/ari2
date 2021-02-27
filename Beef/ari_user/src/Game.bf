@@ -1,10 +1,10 @@
 using System.Collections;
 using System;
-using JSON_Beef.Attributes;
+using Atma;
 
 namespace ari.user
 {
-	[Reflect, AlwaysInclude(AssumeInstantiated=true, IncludeAllMethods=true)]
+	[Serializable]
 	class Game
 	{
 		public int64 id;
@@ -26,7 +26,6 @@ namespace ari.user
 
 		public double gameDuration;
 
-		[IgnoreSerialize]
 		public String playTimeShort = null ~ delete _;
 
 		public void ParsePlayTime()

@@ -1,8 +1,9 @@
 using System;
+using Atma;
 
 namespace ari.user
 {
-	[Reflect, AlwaysInclude(AssumeInstantiated=true, IncludeAllMethods=true)]
+	[Serializable]
 	class PlayerScore
 	{
 		public this()

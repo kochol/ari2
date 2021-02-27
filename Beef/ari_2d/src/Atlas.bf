@@ -1,6 +1,6 @@
 using System;
 using ari.io;
-using JSON_Beef.Serialization;
+using Atma;
 
 namespace ari.en
 {
@@ -24,7 +24,7 @@ namespace ari.en
 					// deserialize atlas
 					let s = scope String((char8*)_data, size);
 					let atlas_data = new AtlasData();
-					JSONDeserializer.Deserialize<AtlasData>(s, atlas_data);
+					JsonConvert.Deserialize<AtlasData>(atlas_data, s);
 					let a = new Atlas();
 					a.data = atlas_data;
 

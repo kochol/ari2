@@ -5,6 +5,7 @@ using curl;
 using System.Collections;
 using ari.io;
 using ari.en;
+using Atma;
 
 namespace ari.user
 {
@@ -136,23 +137,18 @@ namespace ari.user
 		{
 			if (res.Status == .Ok && res.StatusCode == 200)
 			{
-				Player player = new Player();
-				var r = JSON_Beef.Serialization.JSONDeserializer.Deserialize<Player>(res.Body, player);
-				switch (r)
+				switch (JsonConvert.Deserialize<Player>(res.Body))
 				{
-				case .Err(let err):
-					let s = scope String();
-					err.ToString(s);
-					Logger.Error(s);
-					delete player;
-				case .Ok:
+				case .Err:
+					Logger.Error("Error parsing GetPlayerData");
+				case .Ok(let val):
 					if (OnPlayerData != null)
 					{
-						OnPlayerData(player);
+						OnPlayerData(val);
 					}
 					else
 					{
-						delete player;
+						delete val;
 					}
 				}
 			}
@@ -182,13 +178,10 @@ namespace ari.user
 			{
 				// We found a lobby to join
 				Lobby lobby = new Lobby();
-				var r = JSON_Beef.Serialization.JSONDeserializer.Deserialize<Lobby>(res.Body, lobby);
-				switch (r)
+				switch (JsonConvert.Deserialize<Lobby>(lobby, res.Body))
 				{
-				case .Err(let err):
-					let s = scope String();
-					err.ToString(s);
-					Logger.Error(s);
+				case .Err:
+					Logger.Error("Error parse JSON for AutoJoinToLobby");
 					delete lobby;
 				case .Ok:
 					if (OnJoinedLobby != null)
@@ -268,7 +261,7 @@ namespace ari.user
 				if (res.StatusCode == 200)
 				{
 					var games = new GameList();
-					JSON_Beef.Serialization.JSONDeserializer.Deserialize<List<Game>>(res.Body, games.Games);
+					JsonConvert.Deserialize<List<Game>>(games.Games, res.Body);
 					if (onGameList != null)
 					{
 						onGameList(games);
@@ -346,24 +339,19 @@ namespace ari.user
 			req.OnRequestDone = new (res) => {
 				if (res.StatusCode == 200)
 				{
-					Lobby lobby = new Lobby();
-					var r = JSON_Beef.Serialization.JSONDeserializer.Deserialize<Lobby>(res.Body, lobby);
-					switch (r)
+					switch (JsonConvert.Deserialize<Lobby>(res.Body))
 					{
-					case .Err(let err):
-						let s = scope String();
-						err.ToString(s);
-						Logger.Error(s);
-						delete lobby;
-					case .Ok:
+					case .Err:
+						Logger.Error("Error parsing lobby response");
+					case .Ok(let val):
 						if (_OnGetLobby != null)
 						{
-							_OnGetLobby(lobby);
+							_OnGetLobby(val);
 							delete _OnGetLobby;
 						}
 						else
 						{
-							delete lobby;
+							delete val;
 						}
 					}
 				}
@@ -396,9 +384,9 @@ namespace ari.user
 					p.score.Replace('\"', '\'');
 				}
 			}
-			let r = JSON_Beef.Serialization.JSONSerializer.Serialize<String>(game);
+			var val = new String();
 			req.Verb = .Post;
-			if (r case .Ok(let val))
+			if (JsonConvert.Serialize<Game>(game, val))
 			{
 				req.Body = val;
 			}

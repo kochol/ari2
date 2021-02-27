@@ -1,9 +1,10 @@
 using System;
 using System.Collections;
+using Atma;
 
 namespace ari.user
 {
-	[Reflect]
+	[Serializable]
 	class Lobby
 	{
 		public uint64 id;

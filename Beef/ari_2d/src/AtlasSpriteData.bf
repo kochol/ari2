@@ -1,9 +1,10 @@
 using System;
 using System.Collections;
+using Atma;
 
 namespace ari.en
 {
-	[Reflect, AlwaysInclude(AssumeInstantiated=true, IncludeAllMethods=true)]
+	[Serializable]
 	class AtlasSpriteData
 	{
 		public String name = null ~ delete _;
