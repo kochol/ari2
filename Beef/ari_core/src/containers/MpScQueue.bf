@@ -6,7 +6,7 @@ namespace ari.core
 	// Inspired from https://github.com/dbittman/waitfree-mpsc-queue project
 	class MpScQueue<T>
 	{
-		class MpScQueueBin
+		public class MpScQueueBin
 		{
 			public int32 Capacity => _max;
 			public int32 Count => _count;
@@ -28,9 +28,10 @@ namespace ari.core
 				_max = _capacity;
 				_buff = buff;
 				Prev = prev;
+				Interlocked.Fence(.Release);
 			}
 
-			public bool Push(ref T item)
+			public bool Push(ref T item, ref int32 d_head)
 			{
 				Runtime.Assert(item != default, "This queue can not store null or 0 values.");
 				let count = Interlocked.Add(ref _count, 1, .Acquire);
@@ -42,7 +43,8 @@ namespace ari.core
 				}
 
 				/* increment the head, which gives us 'exclusive' access to that element */
-				let head = Interlocked.Add(ref _head, 1, .Acquire) - 1;
+				let head = Interlocked.Add(ref _head, 1, .AcqRel) - 1;
+				d_head = head;
 				let rv = Interlocked.Exchange(ref _buff[head % _max], item, .Release);
 				Runtime.Assert(rv == default);
 
@@ -83,7 +85,7 @@ namespace ari.core
 			delete _head;
 		}
 
-		public void Push(ref T item)
+		public void Push(ref T item, ref MpScQueueBin bin, ref int32 head)
 		{
 			let push_data = Volatile.Read(ref _push_data);
 			var data = push_data;
@@ -91,8 +93,9 @@ namespace ari.core
 			int32 maxCap = 16;
 			while (data != null)
 			{
-				if (data.Push(ref item))
+				if (data.Push(ref item, ref head))
 				{
+					bin = data;
 					Volatile.Write(ref _push_data, data);
 					return;
 				}
@@ -106,8 +109,9 @@ namespace ari.core
 			data = _head;
 			while (data != push_data)
 			{
-				if (data.Push(ref item))
+				if (data.Push(ref item, ref head))
 				{
+					bin = data;
 					Volatile.Write(ref _push_data, data);
 					return;
 				}
@@ -119,10 +123,17 @@ namespace ari.core
 			// Create a new bin
 			_monitor.Enter();
 			if (last_data.Next == null)
-				Volatile.Write(ref last_data.Next, new MpScQueueBin(maxCap * 2, last_data));
-			last_data.Next.Push(ref item);
+			{
+				let new_bin = new MpScQueueBin(maxCap * 2, last_data);
+				Volatile.Write(ref last_data.Next, new_bin);
+			}
 			Volatile.Write(ref _push_data, last_data.Next);
 			_monitor.Exit();
+			if (!last_data.Next.Push(ref item, ref head))
+			{
+				Push(ref item, ref bin, ref head);
+			}
+			bin = last_data.Next;
 		}
 
 		public bool TryPop(ref T item)

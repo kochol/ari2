@@ -6,13 +6,20 @@ namespace testEN
 {
 	class TestMpScQueue
 	{
+		struct debug_data
+		{
+			public bool Checked = false;
+			public int32 Head;
+			public MpScQueue<int32>.MpScQueueBin Bin;
+		}
+
 		const int _writers_count = 64;
 		const int _max_val = 100000;
 		Thread[] _writerThreads = null ~ delete _;
 		Thread _readerThread = null;
 		int32 _i = 0;
 		MpScQueue<int32> _queue = new MpScQueue<int32>() ~ delete _;
-		bool[] _checks = new bool[_max_val] ~ delete _;
+		debug_data[] _checks = new debug_data[_max_val] ~ delete _;
 		bool _run = true;
 
 		void WriteThread()
@@ -22,7 +29,7 @@ namespace testEN
 				var i = Interlocked.Add(ref _i, 1, .Acquire);
 				if (i >= _max_val)
 					return;
-				_queue.Push(ref i);
+				_queue.Push(ref i, ref _checks[i].Bin, ref _checks[i].Head);
 			}
 		}
 
@@ -34,12 +41,12 @@ namespace testEN
 			{
 				if (_queue.TryPop(ref i))
 				{
-					if (_checks[i] == true)
+					if (_checks[i].Checked == true)
 					{
 						Console.Write(i);
 						Console.Write("\t :D");
 					}
-					_checks[i] = true;
+					_checks[i].Checked = true;
 					//if (i != c)
 					{
 						//Console.Write(i);
@@ -70,8 +77,11 @@ namespace testEN
 			_run = false;
 			for (int i = 1; i < _max_val; i++)
 			{
-				if (!_checks[i])
+				if (!_checks[i].Checked)
+				{
+					let check = _checks[i];
 					Console.WriteLine(i);
+				}
 			}
 			_readerThread.Join();
 			delete _readerThread;
